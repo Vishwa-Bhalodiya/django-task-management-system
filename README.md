@@ -55,8 +55,8 @@ django-task-management-system/
 
 ## Tech Stack
 
-- **Backend**: Django (Python)
-- **Database**: PostgreSQL / SQLite
+- **Backend**: Django (Python) & Django REST Framework
+- **Database**: PostgreSQL
 - **Authentication**: Django Auth
 - **Email**: SMTP (Gmail)
 - **Environment Config**: python-decouple
