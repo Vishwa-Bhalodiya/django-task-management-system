@@ -28,16 +28,30 @@ This Django application allows users to manage task in an organized way. The app
 ---
 
 ## Project Structure
+
+```bash
 django-task-management-system/
-├── task_manager/ # Main Django Project
-│ ├── settings.py
-│ ├── urls.py
-│ └── wsgi.py
+├── task_manager/ # Main Django project
+│ ├── init.py
+│ ├── settings.py # Django settings
+│ ├── urls.py # Project URLs
+│ └── wsgi.py # WSGI entry point
 ├── tasks/ # Tasks app (models, views, templates)
-├── users/ # Custom user management
+│ ├── migrations/
+│ ├── models.py
+│ ├── views.py
+│ ├── urls.py
+│ └── templates/
+├── users/ # Custom user management app
+│ ├── migrations/
+│ ├── models.py
+│ ├── views.py
+│ ├── urls.py
+│ └── templates/
 ├── manage.py # Django CLI entry point
 ├── .gitignore
 └── README.md
+```
 
 ## Tech Stack
 
