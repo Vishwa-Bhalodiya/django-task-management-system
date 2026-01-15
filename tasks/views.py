@@ -4,8 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.mail import send_mail
-
-
+from django.core.cache import cache
 from .models import Task
 from .serializers import TaskSerializer
 
@@ -27,6 +26,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Only admin can create tasks")
 
         task = serializer.save()
+        
+        #Clear cache for assigned user
+        cache.delete(f"tasks_user_{task.assigned_to.id}")
+        cache.delete(f"tasks_user_{user.id}") #admin
 
         send_mail(
             subject=f'New Task Assigned: {task.title}',
@@ -37,8 +40,23 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        cache_key = f"tasks_user_{user.id}"
+        tasks = cache.get(cache_key)
 
-        if user.is_superuser:
-            return Task.objects.all()
+        if tasks is None:
+            if user.is_superuser:
+                tasks = Task.objects.all()
+            else:
+                tasks = Task.objects.filter(assigned_to=user)
+                
+            cache.set(cache_key, tasks, timeout=300)
 
-        return Task.objects.filter(assigned_to=user)
+        return tasks
+    
+    def perform_update(self, serializer):
+        task = serializer.save()
+        cache.delete(f"tasks_user_{task.assigned_to.id}")
+        
+    def perform_destroy(self, instance):
+        cache.delete(f"tasks_user_{instance.assigned_to.id}")
+        instance.delete()

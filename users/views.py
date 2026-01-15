@@ -8,6 +8,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAdminUser
 from .permissions import IsNormalUser, IsSuperUser, IsAnonymousUser
 from .models import CustomUser
+from django.core.cache import cache
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -57,3 +58,26 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
     
+    def get_queryset(self):
+        cache_key = "admin_users"
+        
+        user_ids = cache.get(cache_key)
+        if user_ids is None:
+            user_ids = list(
+                CustomUser.objects.values_list("id", flat=True)
+            )
+            cache.set(cache_key, user_ids, 300)
+    
+        return CustomUser.objects.filter(id__in=user_ids)
+    
+    def perform_create(self, serializer):
+        serializer.save()
+        cache.delete("admin_users")
+        
+    def perform_update(self, serializer):
+        serializer.save()
+        cache.delete("admin_users")
+        
+    def perform_destroy(self, instance):
+        cache.delete("admin_users")
+        instance.delete()
