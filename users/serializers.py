@@ -3,7 +3,6 @@ from .models import CustomUser
 from django.contrib.auth import authenticate
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'password']
@@ -11,6 +10,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = CustomUser.objects.create_user(**validated_data)
+
+        # Force admin flags off
+        user.is_superuser = False
+        user.is_staff = False
+        user.is_admin = False
+        user.save()
+
         return user
 
 class LoginSerializer(serializers.Serializer):
@@ -24,9 +30,10 @@ class LoginSerializer(serializers.Serializer):
         )
         if user is None:
             raise serializers.ValidationError("Invalid credentials")
-        return user  # ✅ RETURN USER OBJECT ONLY
-
+        return user  
+    
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'is_superuser', 'is_staff', 'is_active']
+        read_only_fields = fields
