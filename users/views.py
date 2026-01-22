@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from .permissions import IsNormalUser, IsSuperUser, IsAnonymousUser
 from .models import CustomUser
 from django.core.cache import cache
+from .decorators import ( log_user_action, normal_user_required, superuser_required, anonymous_required )
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -38,30 +39,54 @@ class LoginView(APIView):
 class NormalUserAPI(APIView):
     permission_classes=[IsNormalUser]
     
+    @log_user_action
     def get(self, request):
         return Response({"message": "Hello World 1."})
 
 class SuperUserAPI(APIView):
     permission_classes=[IsSuperUser]
     
+    @log_user_action
     def get(self, request):
         return Response({"message": "Hello World 2."})
     
 class AnonymousAPI(APIView):
     permission_classes=[IsAnonymousUser]
     
+    @log_user_action
     def get(self, request):
         return Response({"message":"Hello World 3."})
+
+
+class NormalAPI(APIView):
+    @normal_user_required
+    def get(self, request):
+        return Response({"message": "Hello World 1 from Decorators"})
+    
+class SuperAPI(APIView):
+    @superuser_required
+    def get(self, request):
+        return Response({"message":"Hello World 2 From Decorators"})
+    
+class AnonymousUserAPI(APIView):
+    permission_classes = [AllowAny]
+    @anonymous_required
+    def get (self, request):
+        return Response({"message":"Hello World 3 From Decorators"})
     
 class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
     
+    @log_user_action
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
     def get_queryset(self):
         cache_key = "admin_users"
-        
         user_ids = cache.get(cache_key)
+        
         if user_ids is None:
             user_ids = list(
                 CustomUser.objects.values_list("id", flat=True)
