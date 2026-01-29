@@ -1,14 +1,9 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import SearchFilter
 
-
 from django_filters.rest_framework import DjangoFilterBackend
-from django.core.mail import send_mail
 from django.core.cache import cache
-from django.utils.decorators import method_decorator
-
 
 from .models import Task
 from .serializers import TaskSerializer
@@ -25,8 +20,8 @@ class TaskViewSet(viewsets.ModelViewSet):
     filterset_fields = ['assigned_to', 'status']
 
     @log_task_action
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+    def create(self, request):
+        return super().create(request)
     
     def perform_create(self, serializer):
         task = serializer.save()

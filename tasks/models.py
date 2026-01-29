@@ -1,6 +1,5 @@
 from django.db import models
 from users.models import CustomUser
-from django.conf import settings
 
 class Task(models.Model):
     STATUS_CHOICES = [

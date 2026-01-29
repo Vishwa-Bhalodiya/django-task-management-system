@@ -3,11 +3,11 @@ from django.core.mail import send_mail
 
 def log_task_action(func):
     @wraps(func)
-    def wrapper(self, request, *args, **kwargs):
-        if request and request.user.is_authenticated:
+    def wrapper(self, request):
+        if request.user.is_authenticated:
             print(f"[TASK LOG] Action by user {request.user.id}")
-            
-        return func(self, request, *args, **kwargs)
+    
+        return func(self, request)
     return wrapper
 
 def send_task_email(func):
