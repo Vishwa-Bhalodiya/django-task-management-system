@@ -48,7 +48,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         
         #Custom Claims
-        token["role"] = user.role
+        token["roles"] = list(user.roles.values_list("name", flat=True))
         token["username"] = user.username
         token["is_staff"] = user.is_staff
         token["is_superuser"] = user.is_superuser

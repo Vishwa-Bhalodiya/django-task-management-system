@@ -1,5 +1,5 @@
 from django.urls import path,include
-from .views import RegisterView, LoginView, NormalUserAPI, SuperUserAPI, AnonymousAPI,UserViewSet, NormalAPI, SuperAPI,AnonymousUserAPI, ExternalAPITest, UserServiceAPI
+from .views import RegisterView, LoginView, NormalUserAPI, SuperUserAPI, AnonymousAPI,UserViewSet, NormalAPI, SuperAPI,AnonymousUserAPI, ExternalAPITest, UserServiceAPI, AssignRoleAPI
 from rest_framework import routers, viewsets
 from rest_framework.routers import DefaultRouter
 
@@ -17,5 +17,6 @@ urlpatterns = [
     path('api6/', AnonymousUserAPI.as_view()),
     path('external-api-test/', ExternalAPITest.as_view()),
     path('user-service-api/', UserServiceAPI.as_view()),
+    path('assign-role/<int:user_id>/', AssignRoleAPI.as_view()),
     path('', include(router.urls)),
 ]

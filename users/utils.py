@@ -18,7 +18,7 @@ class Utils:
     @staticmethod
     def generate_unique_id(prefix="USR"):
         """Generate a simple unique ID"""
-        return f"{prefix}-{int(datetime.utcnow().timestamp())}"
+        return f"{prefix}-{int(datetime.now().timestamp())}"
 
     @staticmethod
     def validate_email(email):

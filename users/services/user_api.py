@@ -9,7 +9,7 @@ class UserAPI(BaseAPI):
             "id": user.id,
             "username":user.username,
             "email": user.email,
-            "role": user.role,
+            "role": list(user.roles.values_list("name", flat=True)),
             "is_superuser": user.is_superuser,
             "is_staff": user.is_staff,
             "is_active": user.is_active,

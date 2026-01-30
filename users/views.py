@@ -4,10 +4,11 @@ from rest_framework import status
 from rest_framework import viewsets
 from .serializers import UserRegisterSerializer, LoginSerializer, UserSerializer, CustomTokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .permissions import IsNormalUser, IsSuperUser, IsAnonymousUser
-from .models import CustomUser
+from .models import CustomUser, Role
 from django.core.cache import cache
 from .decorators import log_user_action, role_required, superuser_required, anonymous_required
 from .utils import ExternalAPIService
@@ -160,3 +161,38 @@ class UserServiceAPI(APIView):
         result = service.process_request(request)
         return Response(result, status=status.HTTP_200_OK)
     
+class AssignRoleAPI(APIView):
+    authentication_classes = [JWTAuthentication]
+    
+    @role_required(["admin"])
+    def post(self, request, user_id):
+        roles = request.data.get("roles")
+        
+        if not roles or not isinstance(roles, list):
+            return Response(
+                {"detail": "Roles must be a list"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"detail": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        role_objs = Role.objects.filter(name__in=roles)
+        if role_objs.count() != len(roles):
+            return Response(
+                {"detail": "Invalid role provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.roles.set(role_objs)
+
+        return Response({
+            "message": "Roles assigned successfully",
+            "user_id": user.id,
+            "roles": roles
+        })  
+            

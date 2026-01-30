@@ -4,10 +4,12 @@ from datetime import datetime
 from rest_framework.response import Response
 from rest_framework import status
 from .utils import Utils
+from typing import Optional
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 @dataclass
-class DecoratorResponse:
-    message: str
+class DecoratorResponse:#Hold response data and convert DRF Response object
+    message: str # Response message like Permission Denied
     status_code: int = status.HTTP_403_FORBIDDEN
     
     def to_response(self):
@@ -18,7 +20,7 @@ class DecoratorResponse:
 class RequestUser:
     user: object
     is_authenticated: bool
-    role: str = None
+    role: Optional[str] = None
     is_superuser: bool = False
     is_staff: bool = False
     
@@ -102,8 +104,9 @@ def role_required(allowed_roles, allowed_fields=None):
     
     def decorator(func):
         @wraps(func)
-        def wrapper(self, request):
-            # Check for extra fields if allowed_fields is provided
+        def wrapper(self, request, *args, **kwargs):
+
+            # 1️⃣ Field validation
             if allowed_fields and request.method in ["POST", "PUT", "PATCH"]:
                 extra_fields = set(request.data.keys()) - set(allowed_fields)
                 if extra_fields:
@@ -111,7 +114,31 @@ def role_required(allowed_roles, allowed_fields=None):
                         {"detail": f"Invalid fields: {', '.join(extra_fields)}"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                    
+
+            user = request.user
+
+            # 2️⃣ Authentication check
+            if not user.is_authenticated:
+                if "anonymous" in allowed_roles:
+                    return func(self, request, *args, **kwargs)
+                return Response(
+                    {"detail": "Authentication required"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            # 3️⃣ Role check (MULTIPLE ROLES)
+            user_roles = user.roles.values_list("name", flat=True)
+            if not set(user_roles).intersection(set(allowed_roles)):
+                return Response(
+                    {"detail": "Access denied"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            return func(self, request, *args, **kwargs)
+
+        return wrapper
+    return decorator
+    """
             # Wrap user info in dataclass      
             user = request.user
             req_user = RequestUser(
@@ -135,7 +162,7 @@ def role_required(allowed_roles, allowed_fields=None):
             return func(self, request)
         return wrapper
     return decorator
-
+"""
 def superuser_required(func):
     """Allows only superuser/admin access"""
     @wraps(func)
